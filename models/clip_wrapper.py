@@ -24,13 +24,13 @@ class CLIPVQAModel(BaseVQAModel):
         self.model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
         self.model.to(self.device)  # type: ignore
         self.model.eval()
-        print(f"{self.model_name} loaded successfully")
+        print(f"{self.model_name} ready to use")
 
     def predict(self, image_path: str, question: str) -> str:
         """Use CLIP for VQA by"""
-
         assert self.model is not None, "Model not loaded"
         assert self.processor is not None, "Processor not loaded"
+
         image = Image.open(image_path).convert("RGB")
         candidates = self._get_candidate_answers(question)
         texts = [f"Q: {question} A: {answer}" for answer in candidates]

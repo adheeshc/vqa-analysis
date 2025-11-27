@@ -1,0 +1,26 @@
+{
+  "models": {
+    "clip": {
+      "enabled": true,
+      "model_name": "openai/clip-vit-large-patch14"
+    },
+    "blip2": {
+      "enabled": true,
+      "model_name": "Salesforce/blip2-opt-2.7b"
+    },
+    "llava": {
+      "enabled": true,
+      "model_name": "liuhaotian/llava-v1.5-7b"
+    }
+  },
+  "evaluation": {
+    "num_samples": 500,
+    "batch_size": 1,
+    "random_seed": 42
+  },
+  "output": {
+    "save_predictions": true,
+    "save_metrics": true,
+    "generate_visualizations": true
+  }
+}

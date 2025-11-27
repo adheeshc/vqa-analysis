@@ -15,7 +15,4 @@ cd models/vlm_chatbot
 git read-tree -mu HEAD
 cd ../..
 
-mv models/vlm_chatbot/models/* models/vlm_chatbot/
-rmdir models/vlm_chatbot/models
-
 echo "Done! Submodules initialized with sparse checkout."

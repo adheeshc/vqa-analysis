@@ -1,0 +1,4 @@
+[submodule "models/vlm_chatbot"]
+	path = models/vlm_chatbot
+	url = git@github.com:adheeshc/vlm-chatbot.git
+	update = checkout

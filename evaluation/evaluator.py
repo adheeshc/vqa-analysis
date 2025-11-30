@@ -28,9 +28,9 @@ class VQAEvaluator:
         model = self.models[model_name]
         for sample in tqdm(self.samples, desc=f"{model.model_name} predictions"):
             result = self.evaluate_sample(model, sample)
-            self.results[model.model_name].append(result)
+            self.results[model_name].append(result)
 
-        self.save_predictions(model.model_name)
+        self.save_predictions(model_name)
 
         model.cleanup()
         torch.cuda.empty_cache()
@@ -40,13 +40,14 @@ class VQAEvaluator:
             print("\n" + "=" * 60)
             print(f"Evaluating {model_name}")
             print("=" * 60)
-
+            self.models[model_name].load_model()
             self.evaluate_model(model_name)
         print("\nEvaluation complete for all models")
 
     def evaluate_sample(self, model, sample: Dict):
         """Evaluate single sample"""
-        image_path = f"data/images/{sample['image_id']}.jpg"
+        image_id = sample['image_id']
+        image_path = f"data/images/COCO_val2014_{image_id:012d}.jpg"
         question = sample["question"]
         ground_truth_answers = [ans["answer"] for ans in sample["answers"]]
 

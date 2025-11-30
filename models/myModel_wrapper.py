@@ -11,7 +11,7 @@ class myModelVQAModel(BaseVQAModel):
 
     def __init__(
         self,
-        checkpoint_path="vlm_chatbot/checkpoints/vlm_projection_best_improved.pth",
+        checkpoint_path="models/vlm_chatbot/checkpoints/vlm_projection_best_improved.pth",
         load_in_4bit=True,
         temperature=0.2,
     ):

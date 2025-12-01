@@ -1,6 +1,12 @@
+import gc
+
 import torch
 from PIL import Image
-from transformers import AutoModelForCausalLM, AutoTokenizer, CLIPImageProcessor
+from transformers import (
+    AutoTokenizer,
+    CLIPImageProcessor,
+    LlavaForConditionalGeneration,
+)
 
 from .base_model import BaseVQAModel
 
@@ -20,18 +26,21 @@ class LLaVAVQAModel(BaseVQAModel):
 
         model_path = f"liuhaotian/llava-v1.5-{self.model_size}"
 
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = AutoModelForCausalLM.from_pretrained(
+        self.model = LlavaForConditionalGeneration.from_pretrained(
             model_path,
-            torch_dtype=torch.float16,
+            dtype=torch.float16,
             device_map="auto",
+            max_memory={0: "7GB", "cpu": "8GB"},
             low_cpu_mem_usage=True,
         )
-
         self.image_processor = CLIPImageProcessor.from_pretrained(
-            "openai/clip-vit-large-patch14"
+            "openai/clip-vit-large-patch14-336"
         )
-
         self.model.eval()
         print(f"{self.model_name} ready to use")
 
@@ -44,11 +53,10 @@ class LLaVAVQAModel(BaseVQAModel):
         image = Image.open(image_path).convert("RGB")
         prompt = f"USER: <image>\n{question}\nASSISTANT:"
 
-        image_tensor = (
-            self.image_processor.preprocess(image, return_tensors="pt")["pixel_values"]
-            .half()
-            .to(self.model.device)
-        )
+        pixel_values = self.image_processor(
+            images=image, return_tensors="pt"
+        ).pixel_values
+        pixel_values.to(self.model.device, torch.float16)
 
         input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids.to(
             self.model.device
@@ -56,12 +64,10 @@ class LLaVAVQAModel(BaseVQAModel):
 
         with torch.no_grad():
             output_ids = self.model.generate(
-                input_ids,
-                images=image_tensor,
+                input_ids=input_ids,
+                pixel_values=pixel_values,
                 max_new_tokens=50,
-                temperature=0.2,
-                do_sample=True,
-                use_cache=True,
+                do_sample=False,
             )
 
         answer = self.tokenizer.decode(
@@ -74,5 +80,6 @@ class LLaVAVQAModel(BaseVQAModel):
         del self.model
         del self.tokenizer
         del self.image_processor
+        gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()

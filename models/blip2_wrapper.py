@@ -17,9 +17,7 @@ class BLIP2VQAModel(BaseVQAModel):
     def load_model(self):
         print(f"Loading {self.model_name}")
         model_path = f"Salesforce/{self.model_size}"
-        
         self.processor = Blip2Processor.from_pretrained(model_path)
-        
         self.model = Blip2ForConditionalGeneration.from_pretrained(
             model_path,
             torch_dtype=torch.float16,

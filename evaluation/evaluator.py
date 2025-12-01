@@ -1,3 +1,4 @@
+import gc
 import json
 from pathlib import Path
 from typing import Any, Dict
@@ -33,6 +34,8 @@ class VQAEvaluator:
         self.save_predictions(model_name)
 
         model.cleanup()
+        del self.models[model_name]
+        gc.collect()
         torch.cuda.empty_cache()
 
     def evaluate_all(self):
@@ -46,7 +49,7 @@ class VQAEvaluator:
 
     def evaluate_sample(self, model, sample: Dict):
         """Evaluate single sample"""
-        image_id = sample['image_id']
+        image_id = sample["image_id"]
         image_path = f"data/images/COCO_val2014_{image_id:012d}.jpg"
         question = sample["question"]
         ground_truth_answers = [ans["answer"] for ans in sample["answers"]]

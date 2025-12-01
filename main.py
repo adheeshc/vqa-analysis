@@ -63,41 +63,43 @@ def main():
     if "vlm_chatbot" in model_choices:
         models["VLM_Chatbot"] = myModelVQAModel()
 
-    # Run evaluation
-    evaluator = VQAEvaluator(models, data_path=args.data)
-    evaluator.evaluate_all()
-
-    # Compute Metrics
     results_dir = Path("results/benchmarks")
     results_dir.mkdir(parents=True, exist_ok=True)
-    all_metrics = {}
+    metrics_path = results_dir / "all_metrics.json"
 
-    for model_name in evaluator.results.keys():
+    evaluator = VQAEvaluator(models, data_path=args.data)
+    for model_name in list(models.keys()):
+        print("\n" + "=" * 60)
+        print(f"Evaluating {model_name}")
+        print("=" * 60)
+        evaluator.models[model_name].load_model()
+        evaluator.evaluate_model(model_name)
+
         print("\n" + "=" * 60)
         print(f"Computing metrics for {model_name}")
         print("=" * 60)
-
         predictions = evaluator.results[model_name]
         metrics = VQAMetrics.compute_metrics(predictions)
-
-        all_metrics[model_name] = metrics
 
         print(f"\nOverall Accuracy: {metrics['overall_accuracy']:.2%}")
         print(f"Mean Latency: {metrics['performance']['mean_latency_ms']:.1f}ms")
         print(f"Peak Memory: {metrics['performance']['peak_memory_mb']:.1f}MB")
 
-        print("\nAccuracy by Question Type:")
-        for q_type, q_metrics in metrics["by_question_type"].items():
-            print(
-                f"  {q_type}: {q_metrics['accuracy']:.2%} ({q_metrics['count']} samples)"
-            )
+        if metrics_path.exists():
+            with open(metrics_path, "r") as f:
+                all_metrics = json.load(f)
+        else:
+            all_metrics = {}
+        all_metrics[model_name] = metrics
+        with open(metrics_path, "w") as f:
+            json.dump(all_metrics, f, indent=2, default=float)
+        print(f"\nMetrics for {model_name} saved to {metrics_path}")
 
-    # Save all metrics
-    metrics_path = results_dir / "all_metrics.json"
-    with open(metrics_path, "w") as f:
-        json.dump(all_metrics, f, indent=2, default=float)
+        del evaluator.results[model_name]
 
-    print(f"\nMetrics saved to {metrics_path}")
+    print("\n" + "=" * 60)
+    print("All evaluations complete!")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
